@@ -50,7 +50,7 @@ By analyzing historical Netflix content data and extracting meaningful patterns,
 ### Data Pipeline
 
 ```
-Raw Data → Data Cleaning → Feature Engineering → Model Training → Prediction API → Dashboard
+Raw Data → Data Cleaning → Data analysis → Model Training → Prediction → Web Integration → Dashboard
 ```
 
 ### Technology Stack
