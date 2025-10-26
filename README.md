@@ -20,6 +20,19 @@ By analyzing historical Netflix content data and extracting meaningful patterns,
 - **Market Expansion** - Understanding regional preferences for global growth strategies
 - **Risk Mitigation** - Reduced uncertainty in content investment through predictive analytics
 
+## Website View
+Dashboard - Prediction section
+![Prediction](website-view/prediction.png)
+
+Analytics section
+![Analytics](website-view/analytics.png)
+
+Dataset details section
+![Dataset](website-view/dataset.png)
+
+Documentation section
+![Documentation](website-view/details.png)
+
 ## 🎯 Key Features
 
 ### 🤖 Machine Learning Model
