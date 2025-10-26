@@ -147,7 +147,7 @@ After comprehensive evaluation, we selected Random Forest for:
 
 1. Clone the repository
 2. Install dependencies: `pip install -r requirements.txt`
-3. Run the application: `python app.py`
+3. Run the application: `uvicorn main:app --reload --host 0.0.0.0 --port 8000`
 4. Access dashboard at: `http://localhost:8000`
 
 ### Usage
