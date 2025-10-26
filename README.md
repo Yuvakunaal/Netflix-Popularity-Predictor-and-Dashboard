@@ -21,6 +21,7 @@ By analyzing historical Netflix content data and extracting meaningful patterns,
 - **Risk Mitigation** - Reduced uncertainty in content investment through predictive analytics
 
 ## Website View
+
 Dashboard - Prediction section
 ![Prediction](website-view/prediction.png)
 
@@ -197,4 +198,5 @@ After comprehensive evaluation, we selected Random Forest for:
 - **Scalable Architecture**: Designed for potential integration with real-time content evaluation systems
 
 ---
+
 > ⭐ If you find this project helpful, please give it a star!
