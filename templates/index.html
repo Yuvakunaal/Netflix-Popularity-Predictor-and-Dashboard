@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Netflix Popularity Predictor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --github-dark: #0d1117;
+        --github-darker: #010409;
+        --github-border: #30363d;
+        --github-text: #e6edf3;
+        --github-text-secondary: #7d8590;
+        --github-accent: #1f6feb;
+        --github-success: #238636;
+        --github-danger: #da3633;
+        --github-warning: #d29922;
+        --netflix-red: #e50914;
+        --netflix-red-hover: #f40612;
+        --sidebar-width: 280px;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--github-darker);
+        color: var(--github-text);
+        min-height: 100vh;
+        line-height: 1.5;
+      }
+
+      .app-container {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* GitHub Style Sidebar */
+      .sidebar {
+        width: var(--sidebar-width);
+        background: var(--github-dark);
+        border-right: 1px solid var(--github-border);
+        padding: 24px 0;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+        z-index: 100;
+      }
+
+      .sidebar-header {
+        padding: 0 24px 24px;
+        border-bottom: 1px solid var(--github-border);
+        margin-bottom: 24px;
+      }
+
+      .sidebar-header h1 {
+        font-size: 1.5em;
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .sidebar-header p {
+        color: var(--github-text-secondary);
+        font-size: 0.9em;
+        margin-bottom: 12px;
+      }
+
+      .nav-section {
+        margin-bottom: 32px;
+      }
+
+      .nav-title {
+        font-size: 0.8em;
+        text-transform: uppercase;
+        color: var(--github-text-secondary);
+        font-weight: 600;
+        padding: 0 24px 8px;
+        letter-spacing: 0.5px;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 24px;
+        color: var(--github-text);
+        text-decoration: none;
+        transition: background 0.2s;
+        border-left: 3px solid transparent;
+        cursor: pointer;
+      }
+
+      .nav-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .nav-item.active {
+        background: rgba(255, 255, 255, 0.08);
+        border-left-color: var(--netflix-red);
+        color: var(--netflix-red);
+      }
+
+      .nav-item i {
+        width: 20px;
+        text-align: center;
+      }
+
+      /* Main Content */
+      .main-content {
+        flex: 1;
+        margin-left: var(--sidebar-width);
+        padding: 32px;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--github-border);
+      }
+
+      .header h2 {
+        font-size: 1.5em;
+        font-weight: 600;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 12px;
+      }
+
+      .btn {
+        padding: 8px 16px;
+        border: 1px solid var(--github-border);
+        background: var(--github-dark);
+        color: var(--github-text);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9em;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .btn-primary {
+        background: var(--github-success);
+        border-color: var(--github-success);
+        color: white;
+      }
+
+      .btn-danger {
+        background: var(--github-danger);
+        border-color: var(--github-danger);
+        color: white;
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .btn-primary:hover {
+        background: #2ea043;
+        border-color: #2ea043;
+      }
+
+      /* Stats Grid */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+
+      .stat-card {
+        background: var(--github-dark);
+        border: 1px solid var(--github-border);
+        border-radius: 8px;
+        padding: 20px;
+        transition: transform 0.2s, border-color 0.2s;
+      }
+
+      .stat-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--github-accent);
+      }
+
+      .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2em;
+      }
+
+      .stat-icon.primary {
+        background: rgba(31, 111, 235, 0.1);
+        color: var(--github-accent);
+      }
+      .stat-icon.success {
+        background: rgba(35, 134, 54, 0.1);
+        color: var(--github-success);
+      }
+      .stat-icon.danger {
+        background: rgba(218, 54, 51, 0.1);
+        color: var(--github-danger);
+      }
+      .stat-icon.warning {
+        background: rgba(210, 153, 34, 0.1);
+        color: var(--github-warning);
+      }
+
+      .stat-value {
+        font-size: 2em;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .stat-label {
+        color: var(--github-text-secondary);
+        font-size: 0.9em;
+      }
+
+      /* Dashboard Grid */
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+      }
+
+      /* Form Styles */
+      .form-container {
+        background: var(--github-dark);
+        border: 1px solid var(--github-border);
+        border-radius: 8px;
+        padding: 24px;
+      }
+
+      .form-header {
+        margin-bottom: 24px;
+      }
+
+      .form-header h3 {
+        font-size: 1.3em;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .form-header p {
+        color: var(--github-text-secondary);
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--github-text);
+        font-weight: 500;
+        font-size: 0.9em;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--github-border);
+        border-radius: 6px;
+        background: var(--github-darker);
+        color: var(--github-text);
+        font-size: 14px;
+        transition: border-color 0.2s;
+      }
+
+      input:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--github-accent);
+        box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.1);
+      }
+
+      .submit-btn {
+        width: 100%;
+        padding: 16px;
+        background: var(--netflix-red);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 1em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .submit-btn:hover {
+        background: var(--netflix-red-hover);
+      }
+
+      .submit-btn:disabled {
+        background: var(--github-border);
+        cursor: not-allowed;
+      }
+
+      /* Charts Sidebar */
+      .charts-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .chart-container {
+        background: var(--github-dark);
+        border: 1px solid var(--github-border);
+        border-radius: 8px;
+        padding: 20px;
+      }
+
+      .chart-title {
+        font-size: 1em;
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: var(--github-text);
+      }
+
+      /* Results Section */
+      .result-section {
+        margin-top: 32px;
+        padding: 32px;
+        border-radius: 8px;
+        text-align: center;
+        display: none;
+        animation: slideInUp 0.6s ease-out;
+        border: 1px solid var(--github-border);
+      }
+
+      @keyframes slideInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .popular {
+        background: rgba(35, 134, 54, 0.1);
+        border-color: var(--github-success);
+      }
+
+      .not-popular {
+        background: rgba(218, 54, 51, 0.1);
+        border-color: var(--github-danger);
+      }
+
+      .result h2 {
+        font-size: 2em;
+        margin-bottom: 20px;
+        font-weight: 600;
+      }
+
+      .popular h2 {
+        color: var(--github-success);
+      }
+
+      .not-popular h2 {
+        color: var(--github-danger);
+      }
+
+      .confidence {
+        font-size: 1.2em;
+        margin-top: 15px;
+        font-weight: 600;
+      }
+
+      .probability-container {
+        margin: 25px 0;
+      }
+
+      .probability-bar {
+        width: 100%;
+        height: 24px;
+        background: var(--github-darker);
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+        border: 1px solid var(--github-border);
+      }
+
+      .probability-fill {
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          var(--github-danger),
+          var(--github-warning),
+          var(--github-success)
+        );
+        border-radius: 12px;
+        transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        position: relative;
+      }
+
+      .probability-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 8px;
+        font-size: 0.9em;
+        color: var(--github-text-secondary);
+      }
+
+      /* Feature Impact */
+      .feature-impact {
+        margin-top: 30px;
+      }
+
+      .impact-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        margin-bottom: 8px;
+        background: var(--github-darker);
+        border-radius: 6px;
+        border-left: 4px solid var(--netflix-red);
+      }
+
+      .impact-bar {
+        flex-grow: 1;
+        height: 6px;
+        background: var(--github-border);
+        border-radius: 3px;
+        margin: 0 15px;
+        overflow: hidden;
+      }
+
+      .impact-fill {
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          var(--netflix-red),
+          var(--github-warning)
+        );
+        border-radius: 3px;
+        transition: width 0.5s ease;
+      }
+
+      /* Loading */
+      .loading {
+        text-align: center;
+        padding: 40px;
+        display: none;
+      }
+
+      .loading-spinner {
+        border: 3px solid var(--github-border);
+        border-top: 3px solid var(--netflix-red);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Error */
+      .error {
+        background: rgba(218, 54, 51, 0.1);
+        border: 1px solid var(--github-danger);
+        color: var(--github-danger);
+        padding: 16px;
+        border-radius: 6px;
+        margin-top: 20px;
+        text-align: center;
+        display: none;
+      }
+
+      /* Genre Tags */
+      .genre-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .genre-tag {
+        background: rgba(229, 9, 20, 0.1);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8em;
+        border: 1px solid rgba(229, 9, 20, 0.3);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: var(--netflix-red);
+      }
+
+      .genre-tag:hover {
+        background: rgba(229, 9, 20, 0.2);
+        transform: translateY(-1px);
+      }
+
+      /* Model Status */
+      .model-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8em;
+        font-weight: 500;
+      }
+
+      .model-loaded {
+        background: rgba(35, 134, 54, 0.1);
+        color: var(--github-success);
+        border: 1px solid rgba(35, 134, 54, 0.3);
+      }
+
+      .model-not-loaded {
+        background: rgba(218, 54, 51, 0.1);
+        color: var(--github-danger);
+        border: 1px solid rgba(218, 54, 51, 0.3);
+      }
+
+      /* Field Error */
+      .field-error {
+        color: var(--github-danger);
+        font-size: 0.8em;
+        margin-top: 5px;
+        display: none;
+      }
+
+      /* Responsive */
+      @media (max-width: 1024px) {
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          transform: translateX(-100%);
+          z-index: 1000;
+        }
+
+        .main-content {
+          margin-left: 0;
+        }
+
+        .mobile-menu-btn {
+          display: block;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .main-content {
+          padding: 20px;
+        }
+      }
+
+      /* GitHub-like pulse animation */
+      .pulse {
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.4);
+        }
+        70% {
+          box-shadow: 0 0 0 10px rgba(229, 9, 20, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(229, 9, 20, 0);
+        }
+      }
+
+      /* Code-like feature info */
+      .feature-info {
+        background: var(--github-darker);
+        border: 1px solid var(--github-border);
+        border-radius: 6px;
+        padding: 12px;
+        margin-top: 8px;
+        font-size: 0.8em;
+        color: var(--github-text-secondary);
+        font-family: "Monaco", "Menlo", monospace;
+      }
+
+      /* GitHub-like tabs */
+      .tabs {
+        display: flex;
+        border-bottom: 1px solid var(--github-border);
+        margin-bottom: 20px;
+      }
+
+      .tab {
+        padding: 12px 20px;
+        background: none;
+        border: none;
+        color: var(--github-text-secondary);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+      }
+
+      .tab.active {
+        color: var(--github-text);
+        border-bottom-color: var(--netflix-red);
+      }
+
+      .tab:hover {
+        color: var(--github-text);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      /* Success Animation */
+      .success-animation {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      .success-animation .checkmark {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: block;
+        stroke-width: 2;
+        stroke: var(--github-success);
+        stroke-miterlimit: 10;
+        box-shadow: inset 0px 0px 0px var(--github-success);
+        animation: fill 0.4s ease-in-out 0.4s forwards,
+          scale 0.3s ease-in-out 0.9s both;
+      }
+
+      .success-animation .checkmark__circle {
+        stroke-dasharray: 166;
+        stroke-dashoffset: 166;
+        stroke-width: 2;
+        stroke-miterlimit: 10;
+        stroke: var(--github-success);
+        fill: none;
+        animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+      }
+
+      .success-animation .checkmark__check {
+        transform-origin: 50% 50%;
+        stroke-dasharray: 48;
+        stroke-dashoffset: 48;
+        animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+      }
+
+      @keyframes stroke {
+        100% {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      @keyframes scale {
+        0%,
+        100% {
+          transform: none;
+        }
+        50% {
+          transform: scale3d(1.1, 1.1, 1);
+        }
+      }
+
+      @keyframes fill {
+        100% {
+          box-shadow: inset 0px 0px 0px 30px var(--github-success);
+        }
+      }
+
+      /* Mobile Menu Button */
+      .mobile-menu-btn {
+        display: none;
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 101;
+        background: var(--github-dark);
+        border: 1px solid var(--github-border);
+        color: var(--github-text);
+        padding: 10px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      @media (max-width: 1024px) {
+        .mobile-menu-btn {
+          display: block;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <button class="mobile-menu-btn" id="mobileMenuBtn">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="app-container">
+      <!-- GitHub Style Sidebar -->
+      <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <h1>
+            <i class="fas fa-film" style="color: var(--netflix-red)"></i>
+            Netflix Predictor
+          </h1>
+          <div id="modelStatus" class="model-status model-loaded">
+            <i class="fas fa-circle-check"></i>
+            <span>Model Ready</span>
+          </div>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-title">Navigation</div>
+          <a href="#" class="nav-item active">
+            <i class="fas fa-home"></i>
+            <span>Dashboard</span>
+          </a>
+          <a href="/analytics" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            <span>Analytics</span>
+          </a>
+          <a href="/dataset" class="nav-item">
+            <i class="fas fa-database"></i>
+            <span>Dataset</span>
+          </a>
+          <a href="/details" class="nav-item">
+            <i class="fas fa-book"></i>
+            <span>Documentation</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-title">Model Info</div>
+          <div class="nav-item">
+            <i class="fas fa-brain"></i>
+            <span>Random Forest</span>
+          </div>
+          <div class="nav-item">
+            <i class="fas fa-percentage"></i>
+            <span>90.6% Accuracy</span>
+          </div>
+          <div class="nav-item">
+            <i class="fas fa-list"></i>
+            <span>17 Features</span>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <div class="header">
+          <h2>Content Popularity Dashboard</h2>
+        </div>
+
+        <!-- Statistics Dashboard -->
+        <div class="stats-grid" id="statsDashboard">
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon primary">
+                <i class="fas fa-chart-line"></i>
+              </div>
+            </div>
+            <div class="stat-value" id="totalPredictions">8,807</div>
+            <div class="stat-label">Total Predictions</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon success">
+                <i class="fas fa-bullseye"></i>
+              </div>
+            </div>
+            <div class="stat-value" id="modelAccuracy">90.6%</div>
+            <div class="stat-label">Model Accuracy</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon warning">
+                <i class="fas fa-fire"></i>
+              </div>
+            </div>
+            <div class="stat-value" id="popularRate">30.3%</div>
+            <div class="stat-label">Popular Content Rate</div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Main Form Section -->
+          <div>
+            <div class="form-container">
+              <div class="form-header">
+                <h3>Predict Content Popularity</h3>
+                <p>Enter content details to analyze popularity potential</p>
+              </div>
+
+              <div class="tabs">
+                <button class="tab active">Quick Predict</button>
+              </div>
+
+              <form id="predictionForm" method="post" action="/predict">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label for="type">Content Type</label>
+                    <select id="type" name="type" required>
+                      <option value="">Select Type</option>
+                      <option value="Movie">Movie</option>
+                      <option value="TV Show">TV Show</option>
+                    </select>
+                    <div class="feature-info">// Movie or TV Show format</div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="rating">Content Rating</label>
+                    <select id="rating" name="rating" required>
+                      <option value="">Select Rating</option>
+                      <option value="TV-MA">TV-MA</option>
+                      <option value="TV-14">TV-14</option>
+                      <option value="TV-PG">TV-PG</option>
+                      <option value="R">R</option>
+                      <option value="PG-13">PG-13</option>
+                      <option value="TV-Y7">TV-Y7</option>
+                      <option value="TV-Y">TV-Y</option>
+                    </select>
+                    <div class="feature-info">// Age certification</div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="duration_min">Duration (minutes)</label>
+                    <input
+                      type="number"
+                      id="duration_min"
+                      name="duration_min"
+                      min="1"
+                      max="300"
+                      value="120"
+                      required
+                    />
+                    <div class="feature-info">
+                      // For movies: 90-180 min typical
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="num_seasons">Number of Seasons</label>
+                    <input
+                      type="number"
+                      id="num_seasons"
+                      name="num_seasons"
+                      min="1"
+                      max="20"
+                      value="1"
+                      required
+                    />
+                    <div class="feature-info">
+                      // For TV shows: 1-10 typical
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="release_year">Release Year</label>
+                    <input
+                      type="number"
+                      id="release_year"
+                      name="release_year"
+                      min="1920"
+                      max="2024"
+                      value="2023"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="year_added">Year Added to Netflix</label>
+                    <input
+                      type="number"
+                      id="year_added"
+                      name="year_added"
+                      min="1997"
+                      max="2024"
+                      value="2024"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="month_added">Month Added</label>
+                    <input
+                      type="number"
+                      id="month_added"
+                      name="month_added"
+                      min="1"
+                      max="12"
+                      value="1"
+                      required
+                    />
+                    <div class="feature-info">// 1-12 (January-December)</div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="num_genres">Number of Genres</label>
+                    <input
+                      type="number"
+                      id="num_genres"
+                      name="num_genres"
+                      min="1"
+                      max="10"
+                      value="3"
+                      required
+                    />
+                    <div class="feature-info">
+                      // More genres = broader appeal
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="country">Main Country</label>
+                  <input
+                    type="text"
+                    id="country"
+                    name="country"
+                    value="United States"
+                    required
+                  />
+                  <div class="feature-info">// Primary production country</div>
+                </div>
+
+                <div class="form-group">
+                  <label for="genres">Genres</label>
+                  <input
+                    type="text"
+                    id="genres"
+                    name="genres"
+                    value="Dramas, Thrillers"
+                    required
+                  />
+                  <div class="feature-info">// Comma-separated genre tags</div>
+                  <div class="genre-tags" id="genreTags"></div>
+                </div>
+
+                <button type="submit" class="submit-btn pulse" id="submitBtn">
+                  <i class="fas fa-bolt"></i>
+                  Predict Popularity
+                </button>
+              </form>
+
+              <!-- Loading Indicator -->
+              <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>Analyzing content with AI model...</p>
+              </div>
+
+              <!-- Error messages -->
+              <div class="error" id="error"></div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="result-section" id="result">
+              <div class="success-animation" id="successAnimation">
+                <svg
+                  class="checkmark"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 52 52"
+                >
+                  <circle
+                    class="checkmark__circle"
+                    cx="26"
+                    cy="26"
+                    r="25"
+                    fill="none"
+                  />
+                  <path
+                    class="checkmark__check"
+                    fill="none"
+                    d="M14.1 27.2l7.1 7.2 16.7-16.8"
+                  />
+                </svg>
+              </div>
+              <h2 id="predictionText">Prediction: Popular</h2>
+              <div class="probability-container">
+                <div class="probability-bar">
+                  <div class="probability-fill" id="probabilityFill"></div>
+                </div>
+                <div class="probability-labels">
+                  <span>Not Popular</span>
+                  <span>Popular</span>
+                </div>
+              </div>
+              <div class="confidence" id="confidenceText">
+                Confidence: 85.2%
+              </div>
+
+              <!-- Feature Impact -->
+              <div class="feature-impact" id="featureImpact">
+                <h3 style="margin: 25px 0 15px 0; color: var(--github-text)">
+                  Feature Impact Analysis
+                </h3>
+                <div id="impactList"></div>
+              </div>
+
+              <button
+                class="btn"
+                onclick="resetForm()"
+                style="margin-top: 20px"
+              >
+                <i class="fas fa-redo"></i>
+                Make Another Prediction
+              </button>
+            </div>
+          </div>
+
+          <!-- Charts Sidebar -->
+          <div class="charts-sidebar">
+            <div class="chart-container">
+              <div class="chart-title">
+                <i class="fas fa-chart-pie"></i>
+                Popularity Distribution
+              </div>
+              <canvas id="popularityChart" width="400" height="300"></canvas>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-title">
+                <i class="fas fa-chart-bar"></i>
+                Success by Content Type
+              </div>
+              <canvas id="typeChart" width="400" height="300"></canvas>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-title">
+                <i class="fas fa-tags"></i>
+                Top Genres
+              </div>
+              <canvas id="genreChart" width="400" height="300"></canvas>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // Initialize charts and data
+      let popularityChart, typeChart, genreChart;
+
+      // Genre suggestions
+      const genreSuggestions = [
+        "Dramas",
+        "Comedies",
+        "Action",
+        "Thrillers",
+        "Documentaries",
+        "Romantic Movies",
+        "Horror Movies",
+        "Sci-Fi & Fantasy",
+        "Anime",
+        "Children & Family",
+        "Independent Movies",
+        "International Movies",
+        "Crime TV Shows",
+        "Reality TV",
+        "British TV Shows",
+        "Stand-Up Comedy",
+      ];
+
+      // DOM elements
+      const form = document.getElementById("predictionForm");
+      const resultDiv = document.getElementById("result");
+      const errorDiv = document.getElementById("error");
+      const loadingDiv = document.getElementById("loading");
+      const submitBtn = document.getElementById("submitBtn");
+      const genreTagsContainer = document.getElementById("genreTags");
+      const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+      const sidebar = document.getElementById("sidebar");
+      const successAnimation = document.getElementById("successAnimation");
+
+      document.addEventListener("DOMContentLoaded", function () {
+        initializeForm();
+        setupEventListeners();
+        updateFormVisibility();
+        setupGenreTags();
+        initializeCharts();
+        loadDashboardStats();
+        setupMobileMenu();
+      });
+
+      function setupMobileMenu() {
+        mobileMenuBtn.addEventListener("click", function () {
+          sidebar.style.transform =
+            sidebar.style.transform === "translateX(0px)"
+              ? "translateX(-100%)"
+              : "translateX(0px)";
+        });
+      }
+
+      function initializeCharts() {
+        // Popularity Distribution Chart
+        const popularityCtx = document
+          .getElementById("popularityChart")
+          .getContext("2d");
+        popularityChart = new Chart(popularityCtx, {
+          type: "doughnut",
+          data: {
+            labels: ["Popular", "Not Popular"],
+            datasets: [
+              {
+                data: [42, 58],
+                backgroundColor: ["#238636", "#da3633"],
+                borderWidth: 2,
+                borderColor: "#0d1117",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  color: "#e6edf3",
+                  font: { size: 12 },
+                },
+              },
+            },
+          },
+        });
+
+        // Success by Type Chart
+        const typeCtx = document.getElementById("typeChart").getContext("2d");
+        typeChart = new Chart(typeCtx, {
+          type: "bar",
+          data: {
+            labels: ["Movies", "TV Shows"],
+            datasets: [
+              {
+                label: "Success Rate",
+                data: [78, 82],
+                backgroundColor: ["#e50914", "#1f6feb"],
+                borderWidth: 0,
+                borderRadius: 6,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: { color: "#7d8590" },
+                grid: { color: "rgba(255,255,255,0.1)" },
+              },
+              x: {
+                ticks: { color: "#7d8590" },
+                grid: { display: false },
+              },
+            },
+            plugins: {
+              legend: { display: false },
+            },
+          },
+        });
+
+        // Top Genres Chart
+        const genreCtx = document.getElementById("genreChart").getContext("2d");
+        genreChart = new Chart(genreCtx, {
+          type: "pie",
+          data: {
+            labels: [
+              "Dramas",
+              "Comedies",
+              "Documentaries",
+              "Thrillers",
+              "Action",
+            ],
+            datasets: [
+              {
+                data: [25, 20, 18, 15, 12],
+                backgroundColor: [
+                  "#e50914",
+                  "#d29922",
+                  "#238636",
+                  "#1f6feb",
+                  "#da3633",
+                ],
+                borderWidth: 2,
+                borderColor: "#0d1117",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  color: "#e6edf3",
+                  font: { size: 10 },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function setupEventListeners() {
+        form.addEventListener("submit", handleFormSubmit);
+
+        // Update form visibility based on content type
+        document.getElementById("type").addEventListener("change", function () {
+          updateFormVisibility();
+        });
+
+        // Add genre tag when input changes
+        document
+          .getElementById("genres")
+          .addEventListener("input", function () {
+            updateGenreTags();
+          });
+      }
+
+      function updateFormVisibility() {
+        const type = document.getElementById("type").value;
+        const durationGroup = document
+          .getElementById("duration_min")
+          .closest(".form-group");
+        const seasonsGroup = document
+          .getElementById("num_seasons")
+          .closest(".form-group");
+
+        if (type === "Movie") {
+          durationGroup.style.display = "block";
+          seasonsGroup.style.display = "none";
+        } else if (type === "TV Show") {
+          durationGroup.style.display = "none";
+          seasonsGroup.style.display = "block";
+        } else {
+          durationGroup.style.display = "block";
+          seasonsGroup.style.display = "block";
+        }
+      }
+
+      function setupGenreTags() {
+        // Populate genre suggestions
+        genreSuggestions.forEach((genre) => {
+          const tag = document.createElement("span");
+          tag.className = "genre-tag";
+          tag.textContent = genre;
+          tag.addEventListener("click", function () {
+            addGenreToInput(genre);
+          });
+          genreTagsContainer.appendChild(tag);
+        });
+      }
+
+      function addGenreToInput(genre) {
+        const genresInput = document.getElementById("genres");
+        const currentGenres = genresInput.value
+          .split(",")
+          .map((g) => g.trim())
+          .filter((g) => g);
+
+        if (!currentGenres.includes(genre)) {
+          currentGenres.push(genre);
+          genresInput.value = currentGenres.join(", ");
+          updateGenreTags();
+        }
+      }
+
+      function updateGenreTags() {
+        const genresInput = document.getElementById("genres");
+        const currentGenres = genresInput.value
+          .split(",")
+          .map((g) => g.trim())
+          .filter((g) => g);
+
+        // Highlight active tags
+        const allTags = document.querySelectorAll(".genre-tag");
+        allTags.forEach((tag) => {
+          if (currentGenres.includes(tag.textContent)) {
+            tag.style.background = "rgba(229, 9, 20, 0.3)";
+            tag.style.borderColor = "rgba(229, 9, 20, 0.7)";
+          } else {
+            tag.style.background = "rgba(229, 9, 20, 0.1)";
+            tag.style.borderColor = "rgba(229, 9, 20, 0.3)";
+          }
+        });
+      }
+
+      function initializeForm() {
+        // Set default values
+        document.getElementById("type").value = "Movie";
+        document.getElementById("rating").value = "TV-MA";
+        document.getElementById("duration_min").value = "120";
+        document.getElementById("num_seasons").value = "1";
+        document.getElementById("release_year").value = "2023";
+        document.getElementById("year_added").value = "2024";
+        document.getElementById("month_added").value = "1";
+        document.getElementById("num_genres").value = "3";
+        document.getElementById("country").value = "United States";
+        document.getElementById("genres").value = "Dramas, Thrillers";
+
+        updateFormVisibility();
+        updateGenreTags();
+      }
+
+      async function handleFormSubmit(event) {
+        event.preventDefault();
+
+        // Show loading state
+        submitBtn.disabled = true;
+        loadingDiv.style.display = "block";
+        errorDiv.style.display = "none";
+        resultDiv.style.display = "none";
+
+        try {
+          // Simulate API call to backend
+          const formData = new FormData(form);
+          const response = await simulatePrediction(formData);
+
+          // Display results
+          displayPredictionResult(response);
+        } catch (error) {
+          showError("Failed to get prediction: " + error.message);
+        } finally {
+          submitBtn.disabled = false;
+          loadingDiv.style.display = "none";
+        }
+      }
+
+      // Simulate prediction (replace with actual API call)
+      function simulatePrediction(formData) {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            // Generate random but realistic prediction
+            const isPopular = Math.random() > 0.5;
+            const confidence = Math.floor(Math.random() * 30) + 70; // 70-99%
+
+            // Generate feature impacts
+            const features = [
+              { name: "Content Type", impact: Math.random() * 20 + 10 },
+              { name: "Release Year", impact: Math.random() * 15 + 5 },
+              { name: "Duration", impact: Math.random() * 18 + 7 },
+              { name: "Genres", impact: Math.random() * 25 + 15 },
+              { name: "Rating", impact: Math.random() * 12 + 3 },
+            ];
+
+            // Sort by impact
+            features.sort((a, b) => b.impact - a.impact);
+
+            resolve({
+              prediction: isPopular ? "Popular" : "Not Popular",
+              probability: isPopular ? confidence / 100 : 1 - confidence / 100,
+              confidence: confidence,
+              features: features,
+            });
+          }, 2000);
+        });
+      }
+
+      function displayPredictionResult(result) {
+        // Update result section
+        document.getElementById("predictionText").textContent =
+          "Prediction: " + result.prediction;
+        document.getElementById("confidenceText").textContent =
+          "Confidence: " + result.confidence + "%";
+
+        // Update probability bar
+        const probabilityFill = document.getElementById("probabilityFill");
+        const probability = result.probability * 100;
+        probabilityFill.style.width = probability + "%";
+
+        // Update feature impacts
+        const impactList = document.getElementById("impactList");
+        impactList.innerHTML = "";
+
+        result.features.forEach((feature) => {
+          const impactItem = document.createElement("div");
+          impactItem.className = "impact-item";
+
+          const impactBar = document.createElement("div");
+          impactBar.className = "impact-bar";
+
+          const impactFill = document.createElement("div");
+          impactFill.className = "impact-fill";
+          impactFill.style.width = feature.impact + "%";
+
+          impactBar.appendChild(impactFill);
+
+          impactItem.innerHTML = `
+            <span>${feature.name}</span>
+          `;
+          impactItem.appendChild(impactBar);
+          impactItem.innerHTML += `<span>${feature.impact.toFixed(1)}%</span>`;
+
+          impactList.appendChild(impactItem);
+        });
+
+        // Show appropriate result styling
+        resultDiv.className = "result-section";
+        if (result.prediction === "Popular") {
+          resultDiv.classList.add("popular");
+          successAnimation.style.display = "flex";
+        } else {
+          resultDiv.classList.add("not-popular");
+          successAnimation.style.display = "none";
+        }
+
+        // Show result with animation
+        resultDiv.style.display = "block";
+
+        // Update dashboard stats
+        updateStatsAfterPrediction(result.prediction === "Popular");
+      }
+
+      function updateStatsAfterPrediction(isPopular) {
+        // Update total predictions
+        const totalElement = document.getElementById("totalPredictions");
+        let total = parseInt(totalElement.textContent.replace(/,/g, ""));
+        totalElement.textContent = (total + 1).toLocaleString();
+
+        // Update popular rate if needed
+        if (isPopular) {
+          const popularElement = document.getElementById("popularRate");
+          let popularRate = parseFloat(popularElement.textContent);
+          // Simple approximation for demo
+          popularRate = popularRate + 0.1;
+          popularElement.textContent = popularRate.toFixed(1) + "%";
+        }
+      }
+
+      function showError(message) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = "block";
+      }
+
+      function resetForm() {
+        form.reset();
+        initializeForm();
+        resultDiv.style.display = "none";
+        errorDiv.style.display = "none";
+      }
+
+      function loadDashboardStats() {
+        // In a real app, these would come from an API
+        // For now, we'll just use the initial values
+      }
+    </script>
+  </body>
+</html>

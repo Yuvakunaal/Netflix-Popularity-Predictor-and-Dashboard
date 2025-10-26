@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dataset - Netflix Popularity Predictor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --github-dark: #0d1117;
+        --github-darker: #010409;
+        --github-border: #30363d;
+        --github-text: #e6edf3;
+        --github-text-secondary: #7d8590;
+        --github-accent: #1f6feb;
+        --github-success: #238636;
+        --github-danger: #da3633;
+        --github-warning: #d29922;
+        --netflix-red: #e50914;
+        --sidebar-width: 280px;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--github-darker);
+        color: var(--github-text);
+        min-height: 100vh;
+        line-height: 1.5;
+      }
+
+      .app-container {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* GitHub Style Sidebar */
+      .sidebar {
+        width: var(--sidebar-width);
+        background: var(--github-dark);
+        border-right: 1px solid var(--github-border);
+        padding: 24px 0;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+      }
+
+      .sidebar-header {
+        padding: 0 24px 24px;
+        border-bottom: 1px solid var(--github-border);
+        margin-bottom: 24px;
+      }
+
+      .sidebar-header h1 {
+        font-size: 1.5em;
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .sidebar-header p {
+        color: var(--github-text-secondary);
+        font-size: 0.9em;
+      }
+
+      .nav-section {
+        margin-bottom: 32px;
+      }
+
+      .nav-title {
+        font-size: 0.8em;
+        text-transform: uppercase;
+        color: var(--github-text-secondary);
+        font-weight: 600;
+        padding: 0 24px 8px;
+        letter-spacing: 0.5px;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 24px;
+        color: var(--github-text);
+        text-decoration: none;
+        transition: background 0.2s;
+        border-left: 3px solid transparent;
+      }
+
+      .nav-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .nav-item.active {
+        background: rgba(255, 255, 255, 0.08);
+        border-left-color: var(--netflix-red);
+        color: var(--netflix-red);
+      }
+
+      .nav-item i {
+        width: 20px;
+        text-align: center;
+      }
+
+      /* Main Content */
+      .main-content {
+        flex: 1;
+        margin-left: var(--sidebar-width);
+        padding: 32px;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--github-border);
+      }
+
+      .header h2 {
+        font-size: 1.5em;
+        font-weight: 600;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 12px;
+      }
+
+      .btn {
+        padding: 8px 16px;
+        border: 1px solid var(--github-border);
+        background: var(--github-dark);
+        color: var(--github-text);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9em;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .btn-primary {
+        background: var(--github-success);
+        border-color: var(--github-success);
+        color: white;
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .btn-primary:hover {
+        background: #2ea043;
+        border-color: #2ea043;
+      }
+
+      /* Dataset Info Cards */
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+      }
+
+      .info-card {
+        background: var(--github-dark);
+        border: 1px solid var(--github-border);
+        border-radius: 8px;
+        padding: 24px;
+      }
+
+      .info-card h3 {
+        font-size: 1.1em;
+        margin-bottom: 16px;
+        color: var(--github-text);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .info-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--github-border);
+      }
+
+      .info-item:last-child {
+        border-bottom: none;
+      }
+
+      .info-label {
+        color: var(--github-text-secondary);
+      }
+
+      .info-value {
+        font-weight: 500;
+      }
+
+      /* Data Table */
+      .data-container {
+        background: var(--github-dark);
+        border: 1px solid var(--github-border);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 32px;
+      }
+
+      .data-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--github-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .data-header h3 {
+        font-size: 1.1em;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .search-box {
+        background: var(--github-darker);
+        border: 1px solid var(--github-border);
+        border-radius: 6px;
+        padding: 8px 12px;
+        color: var(--github-text);
+        width: 250px;
+        font-size: 0.9em;
+      }
+
+      .search-box:focus {
+        outline: none;
+        border-color: var(--github-accent);
+      }
+
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--github-border);
+      }
+
+      .data-table th {
+        color: var(--github-text-secondary);
+        font-weight: 600;
+        font-size: 0.9em;
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .data-table tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-top: 1px solid var(--github-border);
+      }
+
+      .pagination-info {
+        color: var(--github-text-secondary);
+        font-size: 0.9em;
+      }
+
+      .pagination-controls {
+        display: flex;
+        gap: 8px;
+      }
+
+      .page-btn {
+        padding: 6px 12px;
+        border: 1px solid var(--github-border);
+        background: var(--github-dark);
+        color: var(--github-text);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9em;
+      }
+
+      .page-btn.active {
+        background: var(--github-accent);
+        border-color: var(--github-accent);
+      }
+
+      .page-btn:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      /* Feature List */
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 16px;
+        margin-top: 20px;
+      }
+
+      .feature-card {
+        background: var(--github-dark);
+        border: 1px solid var(--github-border);
+        border-radius: 6px;
+        padding: 16px;
+        transition: border-color 0.2s;
+      }
+
+      .feature-card:hover {
+        border-color: var(--github-accent);
+      }
+
+      .feature-name {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--github-text);
+      }
+
+      .feature-desc {
+        color: var(--github-text-secondary);
+        font-size: 0.9em;
+        line-height: 1.4;
+      }
+
+      /* Chart Container */
+      .chart-container {
+        background: var(--github-dark);
+        border: 1px solid var(--github-border);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 24px;
+      }
+
+      .chart-title {
+        font-size: 1.1em;
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: var(--github-text);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .chart-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+
+      /* Missing Data */
+      .missing-data {
+        margin-top: 24px;
+      }
+
+      .missing-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        margin-bottom: 8px;
+        background: var(--github-darker);
+        border-radius: 6px;
+        border-left: 4px solid var(--github-warning);
+      }
+
+      .missing-bar {
+        flex-grow: 1;
+        height: 6px;
+        background: var(--github-border);
+        border-radius: 3px;
+        margin: 0 15px;
+        overflow: hidden;
+      }
+
+      .missing-fill {
+        height: 100%;
+        background: var(--github-warning);
+        border-radius: 3px;
+      }
+
+      /* Responsive */
+      @media (max-width: 1024px) {
+        .sidebar {
+          transform: translateX(-100%);
+          z-index: 1000;
+        }
+
+        .main-content {
+          margin-left: 0;
+        }
+
+        .chart-row {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .info-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .main-content {
+          padding: 20px;
+        }
+
+        .header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 16px;
+        }
+
+        .search-box {
+          width: 100%;
+        }
+      }
+
+      /* Model Status */
+      .model-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8em;
+        font-weight: 500;
+      }
+
+      .model-loaded {
+        background: rgba(35, 134, 54, 0.1);
+        color: var(--github-success);
+        border: 1px solid rgba(35, 134, 54, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- GitHub Style Sidebar -->
+      <nav class="sidebar">
+        <div class="sidebar-header">
+          <h1>
+            <i class="fas fa-film" style="color: var(--netflix-red)"></i>
+            Netflix Predictor
+          </h1>
+          <div id="modelStatus" class="model-status model-loaded">
+            <i class="fas fa-circle-check"></i>
+            <span>Model Ready</span>
+          </div>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-title">Navigation</div>
+          <a href="/" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Dashboard</span>
+          </a>
+          <a href="/analytics" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            <span>Analytics</span>
+          </a>
+          <a href="/dataset" class="nav-item active">
+            <i class="fas fa-database"></i>
+            <span>Dataset</span>
+          </a>
+          <a href="/details" class="nav-item">
+            <i class="fas fa-book"></i>
+            <span>Documentation</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-title">Model Info</div>
+          <div class="nav-item">
+            <i class="fas fa-brain"></i>
+            <span>Random Forest</span>
+          </div>
+          <div class="nav-item">
+            <i class="fas fa-percentage"></i>
+            <span>90.6% Accuracy</span>
+          </div>
+          <div class="nav-item">
+            <i class="fas fa-list"></i>
+            <span>17 Features</span>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <div class="header">
+          <h2>Dataset Information</h2>
+        </div>
+
+        <!-- Dataset Info Cards -->
+        <div class="info-grid">
+          <div class="info-card">
+            <h3><i class="fas fa-info-circle"></i> Dataset Overview</h3>
+            <div class="info-item">
+              <span class="info-label">Total Records</span>
+              <span class="info-value">8,807</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Time Period</span>
+              <span class="info-value">1925-2021</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Last Updated</span>
+              <span class="info-value">March 15, 2024</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Data Source</span>
+              <span class="info-value">Netflix API</span>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <h3><i class="fas fa-chart-pie"></i> Content Distribution</h3>
+            <div class="info-item">
+              <span class="info-label">Movies</span>
+              <span class="info-value">6,136 (69.7%)</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">TV Shows</span>
+              <span class="info-value">2,671 (30.3%)</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Popular Titles</span>
+              <span class="info-value">3,758 (42.7%)</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">US Content</span>
+              <span class="info-value">3,240 (36.8%)</span>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <h3><i class="fas fa-cogs"></i> Dataset Structure</h3>
+            <div class="info-item">
+              <span class="info-label">Total Columns</span>
+              <span class="info-value">12</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Numeric Columns</span>
+              <span class="info-value">1</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Text Columns</span>
+              <span class="info-value">11</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Missing Values</span>
+              <span class="info-value">4,307</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Visualization Charts -->
+        <div class="chart-row">
+          <div class="chart-container">
+            <div class="chart-title">
+              <i class="fas fa-chart-pie"></i>
+              Distribution of Movie vs TV Show
+            </div>
+            <canvas id="typeChart" width="400" height="300"></canvas>
+          </div>
+
+          <div class="chart-container">
+            <div class="chart-title">
+              <i class="fas fa-chart-bar"></i>
+              Content Ratings Distribution
+            </div>
+            <canvas id="ratingChart" width="400" height="300"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-row">
+          <div class="chart-container">
+            <div class="chart-title">
+              <i class="fas fa-globe"></i>
+              Top Countries by Content
+            </div>
+            <canvas id="countryChart" width="400" height="300"></canvas>
+          </div>
+
+          <div class="chart-container">
+            <div class="chart-title">
+              <i class="fas fa-star"></i>
+              Feature Importance
+            </div>
+            <canvas id="featureChart" width="400" height="300"></canvas>
+          </div>
+        </div>
+
+        <!-- Missing Data Analysis -->
+        <div class="data-container">
+          <div class="data-header">
+            <h3>
+              <i class="fas fa-exclamation-triangle"></i> Missing Data Analysis
+            </h3>
+          </div>
+          <div class="missing-data">
+            <div class="missing-item">
+              <span>director</span>
+              <div class="missing-bar">
+                <div class="missing-fill" style="width: 30%"></div>
+              </div>
+              <span>2,634 (29.9%)</span>
+            </div>
+            <div class="missing-item">
+              <span>cast</span>
+              <div class="missing-bar">
+                <div class="missing-fill" style="width: 9.4%"></div>
+              </div>
+              <span>825 (9.4%)</span>
+            </div>
+            <div class="missing-item">
+              <span>country</span>
+              <div class="missing-bar">
+                <div class="missing-fill" style="width: 9.4%"></div>
+              </div>
+              <span>831 (9.4%)</span>
+            </div>
+            <div class="missing-item">
+              <span>date_added</span>
+              <div class="missing-bar">
+                <div class="missing-fill" style="width: 0.1%"></div>
+              </div>
+              <span>10 (0.1%)</span>
+            </div>
+            <div class="missing-item">
+              <span>rating</span>
+              <div class="missing-bar">
+                <div class="missing-fill" style="width: 0.05%"></div>
+              </div>
+              <span>4 (0.05%)</span>
+            </div>
+            <div class="missing-item">
+              <span>duration</span>
+              <div class="missing-bar">
+                <div class="missing-fill" style="width: 0.03%"></div>
+              </div>
+              <span>3 (0.03%)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Preview Table -->
+        <div class="data-container">
+          <div class="data-header">
+            <h3>
+              <i class="fas fa-table"></i> Dataset Preview | Kaggle :
+              <a href="https://www.kaggle.com/datasets/ahmadrazakashif/netflix-streaming-data" target="_blank">netflix-streaming-data</a>
+            </h3>
+            <input
+              type="text"
+              class="search-box"
+              placeholder="Search titles..."
+            />
+          </div>
+
+          <div style="overflow-x: auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Type</th>
+                  <th>Rating</th>
+                  <th>Duration</th>
+                  <th>Release Year</th>
+                  <th>Country</th>
+                  <th>Genres</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Dick Johnson Is Dead</td>
+                  <td>Movie</td>
+                  <td>PG-13</td>
+                  <td>90 min</td>
+                  <td>2020</td>
+                  <td>United States</td>
+                  <td>Documentaries</td>
+                </tr>
+                <tr>
+                  <td>Blood & Water</td>
+                  <td>TV Show</td>
+                  <td>TV-MA</td>
+                  <td>2 Seasons</td>
+                  <td>2021</td>
+                  <td>South Africa</td>
+                  <td>International TV Shows, TV Dramas, TV Mysteries</td>
+                </tr>
+                <tr>
+                  <td>Ganglands</td>
+                  <td>TV Show</td>
+                  <td>TV-MA</td>
+                  <td>1 Season</td>
+                  <td>2021</td>
+                  <td>France</td>
+                  <td>
+                    Crime TV Shows, International TV Shows, TV Action &
+                    Adventure
+                  </td>
+                </tr>
+                <tr>
+                  <td>Jailbirds New Orleans</td>
+                  <td>TV Show</td>
+                  <td>TV-MA</td>
+                  <td>1 Season</td>
+                  <td>2021</td>
+                  <td>United States</td>
+                  <td>Docuseries, Reality TV</td>
+                </tr>
+                <tr>
+                  <td>Kota Factory</td>
+                  <td>TV Show</td>
+                  <td>TV-MA</td>
+                  <td>2 Seasons</td>
+                  <td>2021</td>
+                  <td>India</td>
+                  <td>
+                    International TV Shows, Romantic TV Shows, TV Comedies
+                  </td>
+                </tr>
+                <tr>
+                  <td>Midnight Mass</td>
+                  <td>TV Show</td>
+                  <td>TV-MA</td>
+                  <td>1 Season</td>
+                  <td>2021</td>
+                  <td>United States</td>
+                  <td>TV Dramas, TV Horror, TV Mysteries</td>
+                </tr>
+                <tr>
+                  <td>My Little Pony: A New Generation</td>
+                  <td>Movie</td>
+                  <td>PG</td>
+                  <td>91 min</td>
+                  <td>2021</td>
+                  <td>United States</td>
+                  <td>Children & Family Movies</td>
+                </tr>
+                <tr>
+                  <td>Sankofa</td>
+                  <td>Movie</td>
+                  <td>TV-MA</td>
+                  <td>125 min</td>
+                  <td>1993</td>
+                  <td>
+                    United States, Ghana, Burkina Faso, United Kingdom, Germany,
+                    Ethiopia
+                  </td>
+                  <td>Dramas, Independent Movies, International Movies</td>
+                </tr>
+                <tr>
+                  <td>The Great British Baking Show</td>
+                  <td>TV Show</td>
+                  <td>TV-14</td>
+                  <td>9 Seasons</td>
+                  <td>2021</td>
+                  <td>United Kingdom</td>
+                  <td>British TV Shows, Reality TV</td>
+                </tr>
+                <tr>
+                  <td>The Starling</td>
+                  <td>Movie</td>
+                  <td>PG-13</td>
+                  <td>104 min</td>
+                  <td>2021</td>
+                  <td>United States</td>
+                  <td>Comedies, Dramas</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Feature Information -->
+        <div class="data-container">
+          <div class="data-header">
+            <h3><i class="fas fa-list-alt"></i> Feature Descriptions</h3>
+          </div>
+
+          <div class="feature-grid">
+            <div class="feature-card">
+              <div class="feature-name">show_id</div>
+              <div class="feature-desc">
+                Unique identifier for each Netflix title
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-name">type</div>
+              <div class="feature-desc">Content type - Movie or TV Show</div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-name">title</div>
+              <div class="feature-desc">Name of the movie or TV show</div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-name">director</div>
+              <div class="feature-desc">
+                Director of the movie (29.9% missing)
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-name">cast</div>
+              <div class="feature-desc">
+                Actors featured in the movie or show (9.4% missing)
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-name">country</div>
+              <div class="feature-desc">
+                Country of production (9.4% missing)
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-name">date_added</div>
+              <div class="feature-desc">
+                Date when title was added to Netflix (0.1% missing)
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-name">release_year</div>
+              <div class="feature-desc">
+                Year when title was originally released
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-name">rating</div>
+              <div class="feature-desc">
+                Content rating (TV-MA, PG-13, etc.) (0.05% missing)
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-name">duration</div>
+              <div class="feature-desc">
+                Length in minutes or number of seasons (0.03% missing)
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-name">listed_in</div>
+              <div class="feature-desc">Genre categorization of the title</div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-name">description</div>
+              <div class="feature-desc">Summary of the plot</div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // Initialize charts
+      document.addEventListener("DOMContentLoaded", function () {
+        // Type Distribution Chart
+        const typeCtx = document.getElementById("typeChart").getContext("2d");
+        new Chart(typeCtx, {
+          type: "doughnut",
+          data: {
+            labels: ["Movie (69.7%)", "TV Show (30.3%)"],
+            datasets: [
+              {
+                data: [69.7, 30.3],
+                backgroundColor: ["#e50914", "#1f6feb"],
+                borderWidth: 2,
+                borderColor: "#0d1117",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  color: "#e6edf3",
+                  font: { size: 12 },
+                },
+              },
+            },
+          },
+        });
+
+        // Rating Chart
+        const ratingCtx = document
+          .getElementById("ratingChart")
+          .getContext("2d");
+        new Chart(ratingCtx, {
+          type: "bar",
+          data: {
+            labels: [
+              "TV-MA",
+              "TV-14",
+              "TV-PG",
+              "PG-13",
+              "R",
+              "TV-Y7",
+              "TV-Y",
+              "PG",
+              "TV-G",
+              "G",
+            ],
+            datasets: [
+              {
+                label: "Number of Titles",
+                data: [3200, 2100, 860, 490, 480, 320, 210, 180, 85, 65],
+                backgroundColor: "#e50914",
+                borderWidth: 0,
+                borderRadius: 6,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { color: "#7d8590" },
+                grid: { color: "rgba(255,255,255,0.1)" },
+              },
+              x: {
+                ticks: {
+                  color: "#7d8590",
+                  maxRotation: 45,
+                },
+                grid: { display: false },
+              },
+            },
+            plugins: {
+              legend: { display: false },
+            },
+          },
+        });
+
+        // Country Chart
+        const countryCtx = document
+          .getElementById("countryChart")
+          .getContext("2d");
+        new Chart(countryCtx, {
+          type: "pie",
+          data: {
+            labels: [
+              "United States",
+              "India",
+              "United Kingdom",
+              "Japan",
+              "South Korea",
+              "Canada",
+              "Others",
+            ],
+            datasets: [
+              {
+                data: [36.8, 12.1, 6.3, 4.5, 3.8, 3.2, 33.3],
+                backgroundColor: [
+                  "#e50914",
+                  "#d29922",
+                  "#238636",
+                  "#1f6feb",
+                  "#da3633",
+                  "#8b949e",
+                  "#7d8590",
+                ],
+                borderWidth: 2,
+                borderColor: "#0d1117",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  color: "#e6edf3",
+                  font: { size: 10 },
+                },
+              },
+            },
+          },
+        });
+
+        // Feature Importance Chart
+        const featureCtx = document
+          .getElementById("featureChart")
+          .getContext("2d");
+        new Chart(featureCtx, {
+          type: "bar",
+          data: {
+            labels: [
+              "age",
+              "rating_encoded",
+              "is_international",
+              "duration_min",
+              "is_us",
+              "month_added",
+              "num_genres",
+              "year_added",
+              "years_since_added",
+              "num_seasons",
+            ],
+            datasets: [
+              {
+                label: "Importance",
+                data: [
+                  0.25, 0.2, 0.18, 0.15, 0.12, 0.1, 0.08, 0.07, 0.06, 0.05,
+                ],
+                backgroundColor: "#e50914",
+                borderWidth: 0,
+                borderRadius: 6,
+              },
+            ],
+          },
+          options: {
+            indexAxis: "y",
+            responsive: true,
+            scales: {
+              x: {
+                beginAtZero: true,
+                max: 0.3,
+                ticks: { color: "#7d8590" },
+                grid: { color: "rgba(255,255,255,0.1)" },
+              },
+              y: {
+                ticks: { color: "#7d8590" },
+                grid: { display: false },
+              },
+            },
+            plugins: {
+              legend: { display: false },
+            },
+          },
+        });
+      });
+
+      // Simple search functionality
+      document
+        .querySelector(".search-box")
+        .addEventListener("input", function (e) {
+          const searchTerm = e.target.value.toLowerCase();
+          const rows = document.querySelectorAll(".data-table tbody tr");
+
+          rows.forEach((row) => {
+            const title = row.cells[0].textContent.toLowerCase();
+            if (title.includes(searchTerm)) {
+              row.style.display = "";
+            } else {
+              row.style.display = "none";
+            }
+          });
+        });
+    </script>
+  </body>
+</html>
