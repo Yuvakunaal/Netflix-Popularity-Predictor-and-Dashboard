@@ -332,6 +332,6 @@ async def dataset_page(request: Request):
 async def details_page(request: Request):
     return templates.TemplateResponse("details.html", {"request": request})
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
